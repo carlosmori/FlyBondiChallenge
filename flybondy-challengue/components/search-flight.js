@@ -1,101 +1,128 @@
-import React, { useState, useEffect } from "react";
-import Router from "next/router";
-import { connect } from "react-redux";
-import { makeStyles } from "@material-ui/core/styles";
+import React, { useState } from 'react';
+import { connect } from 'react-redux';
+import { makeStyles } from '@material-ui/core/styles';
 import {
   Button,
-  TextField,
-  InputLabel,
   MenuItem,
   FormControl,
-  Select
-} from "@material-ui/core/";
-import { axios } from "../utils/http/axios-singleton";
-import { setPossibleDestinations } from "../state/ducks/destination/actions";
+  Select,
+  LinearProgress,
+  IconButton,
+  InputLabel,
+  InputAdornment,
+  OutlinedInput,
+  Typography
+} from '@material-ui/core/';
+
+import { fetchPossibleDestination } from '../state/ducks/destination/actions';
+import PersonAddIcon from '@material-ui/icons/PersonAdd';
+import theme from '../src/theme';
 
 const useStyles = makeStyles({
-  originSelectFormControl: {
-    width: "48%",
-    margin: "1%"
+  mainTitle: {
+    color: `${theme.palette.primary.light}`
   },
-  originLabel: {
-    marginTop: "5px"
+  originSelectFormControl: {
+    width: '48%',
+    margin: '1%'
   },
   passengersFormControl: {
-    width: "10%",
-    margin: "1%"
+    width: '20%',
+    margin: '1%'
   },
   searchButton: {
-    width: "100%",
-    margin: "5% 0%"
+    width: '100%',
+    margin: '5% 0%'
+  },
+  buttonContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100px',
+    justifyContent: 'center'
+  },
+  searchButton: {
+    width: '50%',
+    margin: '0 auto'
   }
 });
-function SearchFlight(props) {
+const SearchFlight = ({ fetchPossibleDestination, fetchingDestinations }) => {
   const classes = useStyles();
-  const [passengers, handlepassengers] = useState(1);
-  const [origin, setOrigin] = React.useState("");
+  const [passengers, setPassengers] = useState(1);
+  const [origin, setOrigin] = useState('');
 
-  const searchFlights = () => {
-    axios.get(`/flightTickets/${origin}`).then(response => {
-      props.setPossibleDestinations({
-        possibleDestinations: response.data,
-        origin
-      });
-      Router.push("/destinations");
-    });
-  };
-  const handleChange = event => {
-    setOrigin(event.target.value);
-  };
-  useEffect(() => {
-    return () => {};
-  }, []);
   return (
     <div className={classes.searchFlightContainer}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        <div className={classes.mainTitle}>Tu aerolinea Lowcost</div>
+      </Typography>
+      <img src={'/static/flybondi-logo.svg'}></img>
       <div className={classes.searchFlightSecondRow}>
         <FormControl
           className={classes.originSelectFormControl}
           variant="outlined"
         >
-          <InputLabel className={classes.originLabel}>Desde</InputLabel>
+          <InputLabel className={classes.originLabel}>Origen</InputLabel>
+          {/* Hardcode destination values, @todo fix, not scalable */}
           <Select
-            labelId="demo-simple-select-label"
             id="demo-simple-select"
             value={origin}
-            onChange={handleChange}
+            onChange={event => setOrigin(event.target.value)}
+            labelWidth={50}
           >
-            <MenuItem value={"BRC"}>Bariloche</MenuItem>
-            <MenuItem value={"COR"}>Cordoba</MenuItem>
-            <MenuItem value={"MDZ"}>Mendoza</MenuItem>
-            <MenuItem value={"EPA"}>El Palomar</MenuItem>
+            <MenuItem value={'BRC'}>Bariloche</MenuItem>
+            <MenuItem value={'COR'}>Cordoba</MenuItem>
+            <MenuItem value={'MDZ'}>Mendoza</MenuItem>
+            <MenuItem value={'EPA'}>El Palomar</MenuItem>
           </Select>
         </FormControl>
-        <TextField
-          className={classes.passengersFormControl}
-          label="Pasajeros"
-          type="number"
-          value={passengers}
-          onChange={event => handlepassengers(event.target.value)}
-          InputLabelProps={{
-            shrink: true
-          }}
+        <FormControl
           variant="outlined"
-        />
-        <Button
-          className={classes.searchButton}
-          onClick={searchFlights}
-          variant="contained"
-          color="primary"
-          disabled={!origin}
+          className={classes.passengersFormControl}
         >
-          Buscar Vuelos
-        </Button>
+          <InputLabel htmlFor="outlined-adornment-password">
+            Pasajeros
+          </InputLabel>
+          <OutlinedInput
+            id="outlined-adornment-password"
+            value={passengers}
+            onChange={event => setPassengers(event.target.value)}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={() => setPassengers(passengers + 1)}
+                  edge="end"
+                >
+                  {<PersonAddIcon />}
+                </IconButton>
+              </InputAdornment>
+            }
+            labelWidth={70}
+          />
+        </FormControl>
+        <div className={classes.buttonContainer}>
+          {fetchingDestinations ? (
+            <LinearProgress variant="query" />
+          ) : (
+            <Button
+              className={classes.searchButton}
+              onClick={() => fetchPossibleDestination({ origin })}
+              variant="contained"
+              color="primary"
+              disabled={!origin}
+            >
+              Buscar Vuelos
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
-}
+};
 
-const mapStateToProps = state => ({});
-export default connect(mapStateToProps, { setPossibleDestinations })(
+const mapStateToProps = state => ({
+  fetchingDestinations: state.destinations.loading
+});
+export default connect(mapStateToProps, { fetchPossibleDestination })(
   SearchFlight
 );

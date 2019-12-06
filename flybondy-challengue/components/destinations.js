@@ -1,80 +1,104 @@
-import React, { useState, useEffect } from "react";
-import Router from "next/router";
-import { connect } from "react-redux";
-import { makeStyles } from "@material-ui/core/styles";
-import { KeyboardDatePicker } from "@material-ui/pickers";
-import { useMediaQuery, Button } from "@material-ui/core";
-import { axios } from "../utils/http/axios-singleton";
-import { setTicketList } from "../state/ducks/ticket-list/actions";
+import React, { useState, useEffect } from 'react';
+import { connect } from 'react-redux';
+import { makeStyles } from '@material-ui/core/styles';
+import { KeyboardDatePicker } from '@material-ui/pickers';
+import { useMediaQuery, Button, LinearProgress } from '@material-ui/core';
+import { fetchFlightTickets } from '../state/ducks/flight-tickets/actions';
+import theme from '../src/theme';
 
 const useStyles = makeStyles({
+  mainTitle: {
+    color: `${theme.palette.secondary.light}`
+  },
   destinationsContainer: {
-    display: "flex",
-    flexDirection: "column"
+    display: 'flex'
   },
   possibleDestinationContainer: {
-    position: "relative",
-    margin: "5px",
-    cursor: "pointer",
-    textAlign: "center",
-    margin: "0 auto",
-    width: "fit-content"
+    position: 'relative',
+    margin: '5px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    margin: '10px auto',
+    width: 'fit-content',
+    overflow: 'hidden',
+    borderRadius: '5px',
+    transition: 'transform .5s ease',
+    '&:hover': {
+      transform: 'scale(1.05)'
+    }
   },
   possibleDestination: {
-    color: "white",
-    position: "absolute",
-    bottom: "40px",
-    left: "10px"
+    color: 'white',
+    position: 'absolute',
+    bottom: '40px',
+    left: '10px'
   },
   cheapestPriceForDestination: {
-    color: "white",
-    position: "absolute",
-    bottom: "0",
-    left: "10px"
+    color: 'white',
+    position: 'absolute',
+    bottom: '0',
+    left: '10px'
   },
   possibleDestinationImage: {
-    width: "100%"
+    width: '100%'
   },
   datepickerFormControl: {
-    width: "48%",
-    margin: "1%"
+    width: '48%',
+    margin: '1%'
   },
   formControlsContainer: {
-    textAlign: "center"
+    textAlign: 'center'
   },
   searchButton: {
-    marginTop: "40px"
+    width: '50%',
+    margin: '0 auto'
+  },
+  buttonContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100px',
+    justifyContent: 'center'
+  },
+  destinationImage: {
+    backgroundPosition: 'bottom',
+    backgroundRepeat: 'no-repeat'
   }
 });
-function Destinations(props) {
+const Destinations = ({
+  origin,
+  fetchFlightTickets,
+  fetchingFlightTickets,
+  destinations
+}) => {
   const classes = useStyles();
   const [toggleCalendar, handleToggleCalendar] = useState(false);
   const [toDate, handleToDate] = useState(null);
   const [fromDate, handleFromDate] = useState(null);
-  const [destination, handleDestination] = useState("");
-  const desktopView = useMediaQuery("(min-width:600px)");
+  const [destination, handleDestination] = useState('');
+  const desktopView = useMediaQuery('(min-width:600px)');
 
   const searchFlightsTickets = () => {
     const payload = {
-      origin: props.origin,
+      origin,
       destination,
       toDate: toDate.toString().slice(0, 10),
       fromDate: fromDate.toString().slice(0, 10)
     };
-    axios.post(`/flightTickets`, payload).then(response => {
-      props.setTicketList({
-        ticketList: response.data
-      });
-      Router.push("/destinations/ticket-list");
-    });
+    fetchFlightTickets(payload);
   };
   useEffect(() => {
     return () => {};
   }, []);
   return (
-    <div>
-      <div className={classes.destinationsContainer}>
-        {props.destinations.map((destination, index) => {
+    <div className={classes.boxContainer}>
+      <h1 className={classes.mainTitle}>
+        Destinos Increibles, Precios Accesibles
+      </h1>
+      <div
+        className={classes.destinationsContainer}
+        style={{ flexDirection: desktopView ? 'row' : 'column' }}
+      >
+        {destinations.map((destination, index) => {
           return (
             <div
               className={classes.possibleDestinationContainer}
@@ -90,16 +114,14 @@ function Destinations(props) {
               <h2 className={classes.cheapestPriceForDestination}>
                 Desde ${destination.cheapestPrice}
               </h2>
-              {!desktopView ? (
-                <img
-                  src={require(`../assets/mobile/${destination.possibleDest}.png`)}
-                ></img>
-              ) : (
-                <img
-                  className={classes.possibleDestinationImage}
-                  src={require(`../assets/desktop/${destination.possibleDest}.png`)}
-                ></img>
-              )}
+              <div
+                style={{
+                  backgroundImage: `url('/static/desktop/${destination.possibleDest}.png')`,
+                  width: desktopView ? '400px' : '300px',
+                  height: desktopView ? '300px' : '100px'
+                }}
+                className={classes.destinationImage}
+              ></div>
             </div>
           );
         })}
@@ -108,7 +130,7 @@ function Destinations(props) {
         <div className={classes.formControlsContainer}>
           <div className={classes.searchFlightFirstRow}>
             <KeyboardDatePicker
-              placeholder="Fecha de Salida"
+              placeholder="Salida"
               clearable
               value={fromDate}
               onChange={date => {
@@ -121,7 +143,7 @@ function Destinations(props) {
               inputVariant="outlined"
             />
             <KeyboardDatePicker
-              placeholder="Fecha de Llegada"
+              placeholder="Llegada"
               clearable
               value={toDate}
               onChange={date => handleToDate(date)}
@@ -130,25 +152,32 @@ function Destinations(props) {
               className={classes.datepickerFormControl}
               inputVariant="outlined"
             />
-            <Button
-              className={classes.searchButton}
-              onClick={searchFlightsTickets}
-              variant="contained"
-              color="primary"
-              disabled={!toDate || !fromDate || !destination}
-            >
-              Buscar Vuelos
-            </Button>
+            <div className={classes.buttonContainer}>
+              {fetchingFlightTickets ? (
+                <LinearProgress variant="query" />
+              ) : (
+                <Button
+                  className={classes.searchButton}
+                  onClick={searchFlightsTickets}
+                  variant="contained"
+                  color="primary"
+                  disabled={!toDate || !fromDate || !destination}
+                >
+                  Buscar Vuelos
+                </Button>
+              )}
+            </div>
           </div>
           <div className={classes.searchFlightThirdRow}></div>
         </div>
       ) : null}
     </div>
   );
-}
+};
 
 const mapStateToProps = state => ({
   origin: state.destinations.origin,
-  destinations: state.destinations.possibleDestination
+  destinations: state.destinations.possibleDestination,
+  fetchingFlightTickets: state.ticketList.loading
 });
-export default connect(mapStateToProps, { setTicketList })(Destinations);
+export default connect(mapStateToProps, { fetchFlightTickets })(Destinations);

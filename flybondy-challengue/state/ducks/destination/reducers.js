@@ -1,18 +1,27 @@
-import { SET_POSSIBLE_DESTINATIONS } from "./types";
+import { FETCH_POSSIBLE_DESTINATIONS } from './types';
 
 const initialState = {
   possibleDestination: [],
-  origin: {}
+  origin: {},
+  loading: false
 };
 
 export default (state = initialState, { type, payload }) => {
   switch (type) {
-    case SET_POSSIBLE_DESTINATIONS:
+    case FETCH_POSSIBLE_DESTINATIONS.SUCCESS:
+      const { origin, possibleDestination } = payload;
       return {
         ...state,
-        possibleDestination: payload.possibleDestinations,
-        origin: payload.origin
+        possibleDestination,
+        origin
       };
+    case FETCH_POSSIBLE_DESTINATIONS.LOADING:
+      const { loading } = payload;
+      return {
+        ...state,
+        loading
+      };
+
     default:
       return state;
   }

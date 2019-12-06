@@ -1,22 +1,30 @@
 import { createMuiTheme } from '@material-ui/core/styles';
-import { red } from '@material-ui/core/colors';
 
-// Create a theme instance.
-const theme = createMuiTheme({
+// Create custom theme according to FlyBondi palette
+export const theme = createMuiTheme({
   palette: {
     primary: {
-      main: '#556cd6',
+      light: '#fdbe15',
+      main: '#fdbe15',
+      dark: '#cccccc',
+      contrastText: '#2f3143'
     },
     secondary: {
-      main: '#19857b',
-    },
-    error: {
-      main: red.A400,
+      light: '#2f3143',
+      main: '#2f3143',
+      dark: '#c7a000',
+      contrastText: '#fff'
     },
     background: {
-      default: '#fff',
+      paper: '#fff'
     },
+    text: {
+      secondary: '#ffd110'
+    },
+    type: 'light'
   },
+  typography: {
+    fontFamily: `'Lato','Roboto',sans-serif`
+  }
 });
-
 export default theme;
