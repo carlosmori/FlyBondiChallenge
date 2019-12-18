@@ -27,7 +27,7 @@ const useStyles = makeStyles({
     margin: '1%'
   },
   passengersFormControl: {
-    width: '20%',
+    width: '25%',
     margin: '1%'
   },
   searchButton: {
